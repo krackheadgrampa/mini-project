@@ -1,0 +1,86 @@
+//code for smoke and flame detection system
+//  Fire & Smoke Detection System using Arduino UNO
+// Components: MQ-2 (smoke sensor), Flame sensor, 16x2 LCD (I2C), Buzzer
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// -------- Pin Definitions --------
+const int mq2Pin = A0;     // MQ-2 smoke sensor → Analog pin A0
+const int flamePin = 2;    // Flame sensor digital output → D2
+const int buzzerPin = 8;   // Buzzer → D8
+
+// -------- LCD Setup --------
+LiquidCrystal_I2C lcd(0x27, 16, 2); // ✅ Your LCD is at 0x27
+
+// -------- Thresholds --------
+int smokeThreshold = 700;   // Adjust this value after testing
+
+void setup() {
+  // Pin Modes
+  pinMode(flamePin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+
+  // Initialize LCD
+  lcd.init();
+  lcd.backlight();
+
+  // Serial Monitor (for debugging)
+  Serial.begin(9600);
+
+  // Welcome message
+  lcd.setCursor(0,0);
+  lcd.print(" Fire & Smoke ");
+  lcd.setCursor(0,1);
+  lcd.print(" System Ready ");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // -------- Read Sensors --------
+  int mq2Value = analogRead(mq2Pin);      // Smoke sensor value (0–1023)
+  int flameValue = digitalRead(flamePin); // Flame sensor value (0 or 1)
+
+  // -------- Debugging Output --------
+  Serial.print("Smoke: ");
+  Serial.print(mq2Value);
+  Serial.print(" | Flame: ");
+  Serial.println(flameValue);
+
+  // -------- Check Conditions --------
+  bool smokeDetected = (mq2Value >= smokeThreshold);
+  bool flameDetected = (flameValue == LOW); // LOW usually means flame detected
+
+  if (smokeDetected) {
+    // -------- Smoke Alert --------
+    digitalWrite(buzzerPin, HIGH);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("!!! ALERT !!!");
+    lcd.setCursor(0,1);
+    lcd.print("Smoke: ");
+    lcd.print(mq2Value);
+  }
+  else if (flameDetected) {
+    // -------- Flame Alert --------
+    digitalWrite(buzzerPin, HIGH);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("!!! ALERT !!!");
+    lcd.setCursor(0,1);
+    lcd.print("Flame Detected!");
+  }
+  else {
+    // -------- Safe Condition --------
+    digitalWrite(buzzerPin, LOW);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Safe Environment");
+    lcd.setCursor(0,1);
+    lcd.print("Smoke: ");
+    lcd.print(mq2Value);
+  }
+
+  delay(500); // update every 0.5s
+}
